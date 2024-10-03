@@ -1,3 +1,5 @@
+
+    
 from sqlalchemy import create_engine
 from sqlalchemy import Table, Column, Integer, String, Float, MetaData, ForeignKey
 
@@ -56,6 +58,18 @@ def select_all(table, limit=None):
         query = query.limit(limit)
     return query
 
+def select_where(table, where_q):
+    query = table.select().where(where_q)
+    return query
+
+def update_data(conn, table, where_q, new_values):
+    upd = table.update().where(where_q).values(**new_values)
+    conn.execute(upd)
+
+def delete_data(conn, table, where_q):
+    delete_query = table.delete().where(where_q)
+    conn.execute(delete_query)
+
 def print_data(data):
     for el in data:
         print(el)
@@ -67,13 +81,23 @@ if __name__ == "__main__":
     meta.create_all(engine)
     print(engine.table_names())
     conn = engine.connect()
-    stations_ins = stations.insert()
-    clean_measure_ins = clean_measure.insert()
-    insert_data(conn, stations_ins, 'clean_stations.csv')
-    insert_data(conn, clean_measure_ins, 'clean_measure.csv')
-    all_stations = conn.execute(select_all(stations))
-    print_data(all_stations)
-    all_clean_measure = conn.execute(select_all(clean_measure))
-    print_data(all_clean_measure)
-    stations_limit_5 = conn.execute(select_all(stations, 5))
-    
+    # stations_ins = stations.insert()
+    # clean_measure_ins = clean_measure.insert()
+    # insert_data(conn, stations_ins, 'clean_stations.csv')
+    # insert_data(conn, clean_measure_ins, 'clean_measure.csv')
+    # all_stations = conn.execute(select_all(stations))
+    # print_data(all_stations)
+    # all_clean_measure = conn.execute(select_all(clean_measure))
+    # print_data(all_clean_measure)
+    # stations_limit_5 = conn.execute(select_all(stations, 5))
+    us_stations = conn.execute(select_where(stations, stations.columns.country == 'US'))
+    print("Stacje w kraju 'US':")
+    print_data(us_stations)
+    update_data(conn, stations, stations.columns.station == 'USC00519397', {'name': 'New Name abc'})
+    updated_station = conn.execute(select_where(stations, stations.columns.station == 'USC00519397'))
+    print("Zaktualizowana stacja:")
+    print_data(updated_station)
+    delete_data(conn, stations, stations.columns.station == 'USC00516128')
+    deleted_station = conn.execute(select_where(stations, stations.columns.station == 'USC00516128'))
+    print("Po usunięciu stacji:")
+    print_data(deleted_station)
